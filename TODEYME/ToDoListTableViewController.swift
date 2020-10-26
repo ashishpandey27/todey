@@ -51,12 +51,7 @@ class ToDoListTableViewController: UITableViewController {
         itemArray.append(newItem)
                itemArray.append(newItem)
                itemArray.append(newItem)
-        itemArray.append(newItem)
-               itemArray.append(newItem)
-               itemArray.append(newItem)
-        itemArray.append(newItem)
-               itemArray.append(newItem)
-               itemArray.append(newItem)
+       
         
         
         
