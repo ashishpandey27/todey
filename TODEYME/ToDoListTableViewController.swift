@@ -8,54 +8,18 @@
 
 import UIKit
 
+
 class ToDoListTableViewController: UITableViewController {
 
-    //"fsdf","sdfsdf", "fdgdfgfd", "fsdf","sdfsdf", "fdgdfgfd", "fsdf","sdfsdf", "fdgdfgfd", "fsdf","sdfsdf", "fdgdfgfd","fsdf","sdfsdf", "fdgdfgfd", "fsdf","sdfsdf", "fdgdfgfd", "fsdf","sdfsdf", "fdgdfgfd", "fsdf","sdfsdf", "fdgdfgfd", "fsdf","sdfsdf", "fdgdfgfd"
-    
+    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
+ 
     var itemArray = [Item]()
-    
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        let newItem23 = Item()
-        newItem23.title = "sfgdfsdffrfvrfvdsgdf"
-        itemArray.append(newItem23)
-        
-        let newItem2 = Item()
-                      newItem2.title = "sfgdfsdfdsgdf"
-                      itemArray.append(newItem2)
-
-        let newItem = Item()
-        newItem.title = "sfgdfgdf"
-        itemArray.append(newItem)
-       
-        
-         itemArray.append(newItem)
-         itemArray.append(newItem)
-        itemArray.append(newItem)
-               itemArray.append(newItem)
-               itemArray.append(newItem)
-        itemArray.append(newItem)
-               itemArray.append(newItem)
-               itemArray.append(newItem)
-        itemArray.append(newItem)
-               itemArray.append(newItem)
-               itemArray.append(newItem)
-        itemArray.append(newItem)
-               itemArray.append(newItem)
-               itemArray.append(newItem)
-        itemArray.append(newItem)
-               itemArray.append(newItem)
-               itemArray.append(newItem)
-        itemArray.append(newItem)
-               itemArray.append(newItem)
-               itemArray.append(newItem)
-       
-        
-        
-        
-        
+     
+       loadItems()
+     
         // Uncomment the following line to preserve selection between presentations
         // self.clearsSelectionOnViewWillAppear = false
 
@@ -92,8 +56,9 @@ class ToDoListTableViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done
+        self.saveItems()
         
-        tableView.reloadData()
+       
         tableView.deselectRow(at: indexPath, animated: true )
     }
     
@@ -111,6 +76,8 @@ class ToDoListTableViewController: UITableViewController {
             newItem.title = textField.text!
             
             self.itemArray.append(newItem)
+            self.saveItems()
+            
         }
         
         alert.addTextField { (alertTextfield) in
@@ -120,6 +87,35 @@ class ToDoListTableViewController: UITableViewController {
         
         alert.addAction(action)
         present(alert, animated: true, completion: nil)
+    }
+    
+    
+    func saveItems() {
+        
+        let encoder = PropertyListEncoder()
+                   
+            do {
+                   let data = try encoder.encode(self.itemArray)
+                   try data.write(to: dataFilePath!)
+                       
+                } catch {
+                      print("Error handling data")
+                }
+                   self.tableView.reloadData()
+        }
+    
+    
+    func loadItems() {
+        
+        if let data = try? Data(contentsOf: dataFilePath!) {
+            let decoder = PropertyListDecoder()
+            do {
+                itemArray = try decoder.decode([Item].self, from: data)
+            }catch {
+                print("Errors")
+            }
+        }
+         
     }
     
     /*
