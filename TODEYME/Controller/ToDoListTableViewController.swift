@@ -7,24 +7,25 @@
 //
 
 import UIKit
-
+import CoreData
 
 class ToDoListTableViewController: UITableViewController {
 
-    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
+    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
  
     var itemArray = [Item]()
+    var selectedCategory : Category? {
+        didSet {
+              loadItems()
+        }
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
      
-       loadItems()
-     print("sdfdsfsdfsdf")
-        // Uncomment the following line to preserve selection between presentations
-        // self.clearsSelectionOnViewWillAppear = false
-
-        // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
-        // self.navigationItem.rightBarButtonItem = self.editButtonItem
+     
     }
 
     // MARK: - Table view data source
@@ -72,9 +73,10 @@ class ToDoListTableViewController: UITableViewController {
         let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
             
             
-            let newItem = Item()
+            let newItem = Item(context: self.context)
             newItem.title = textField.text!
-            
+            newItem.done = false
+            newItem.parentCategory = self.selectedCategory
             self.itemArray.append(newItem)
             self.saveItems()
             
@@ -92,31 +94,60 @@ class ToDoListTableViewController: UITableViewController {
     
     func saveItems() {
         
-        let encoder = PropertyListEncoder()
-                   
-            do {
-                   let data = try encoder.encode(self.itemArray)
-                   try data.write(to: dataFilePath!)
-                       
-                } catch {
-                      print("Error handling data")
-                }
-                   self.tableView.reloadData()
-        }
-    
-    
-    func loadItems() {
-        
-        if let data = try? Data(contentsOf: dataFilePath!) {
-            let decoder = PropertyListDecoder()
-            do {
-                itemArray = try decoder.decode([Item].self, from: data)
-            }catch {
-                print("Errors")
+        do {
+            try context.save()
+                  
+            } catch {
+                  
+                print("Error \(error)")
             }
+         tableView.reloadData()
+       }
+    
+    
+    func loadItems(with request : NSFetchRequest<Item> = Item.fetchRequest(), predicate : NSPredicate? = nil) {
+          
+        let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory!.name!)
+        
+        if let additionalPredicate = predicate {
+            request.predicate =  NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, additionalPredicate])
+        } else {
+            request.predicate = categoryPredicate
         }
-         
+        
+      
+          do {
+              itemArray =  try context.fetch(request)
+          } catch {
+               print("Error \(error)")
+          }
+        tableView.reloadData()
     }
+}
+
+extension ToDoListTableViewController : UISearchBarDelegate {
+      
+      func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+          
+          let request : NSFetchRequest<Item> = Item.fetchRequest()
+          
+          let predicate  = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+          request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
+          
+        loadItems(with: request, predicate : predicate)
+      }
+      
+      func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+          
+          if searchBar.text?.count == 0 {
+              loadItems()
+              DispatchQueue.main.async {
+                  searchBar.resignFirstResponder()
+              }
+          }
+      }
+
+}
     
     /*
     // Override to support conditional editing of the table view.
@@ -163,4 +194,4 @@ class ToDoListTableViewController: UITableViewController {
     }
     */
 
-}
+
